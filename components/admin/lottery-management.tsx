@@ -202,7 +202,7 @@ export function LotteryManagement() {
                   {lotteries.map((lottery) => (
                     <TableRow key={lottery.lottery_id}>
                       <TableCell className="font-medium">{lottery.ticket_name}</TableCell>
-                      <TableCell>{lottery.ticket_price} ETH</TableCell>
+                      <TableCell>{lottery.ticket_price} LOT</TableCell>
                       <TableCell>{lottery.prize_structure}</TableCell>
                       <TableCell>
                         <Badge
@@ -285,7 +285,7 @@ export function LotteryManagement() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="ticket-price">Ticket Price (ETH)</Label>
+                  <Label htmlFor="ticket-price">Ticket Price (LOT)</Label>
                   <Input
                     id="ticket-price"
                     name="ticket-price"

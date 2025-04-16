@@ -241,7 +241,7 @@ export function LotteryPurchase() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500">Ticket Price:</span>
-                  <span className="font-medium">{activeLottery?.ticket_price} ETH</span>
+                  <span className="font-medium">{activeLottery?.ticket_price} LOT</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500">Ends in:</span>
@@ -275,7 +275,7 @@ export function LotteryPurchase() {
                 </div>
                 <div className="flex justify-between items-center font-bold text-lg pt-4 border-t">
                   <span>Total:</span>
-                  <span>{Number.parseFloat(activeLottery?.ticket_price || '0') * ticketCount} ETH</span>
+                  <span>{Number.parseFloat(activeLottery?.ticket_price || '0') * ticketCount} LOT</span>
                 </div>
               </CardContent>
               <CardFooter>
