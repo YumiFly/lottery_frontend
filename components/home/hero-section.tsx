@@ -38,7 +38,7 @@ export function HeroSection() {
               />
             </div>
             <div className="absolute -bottom-6 -left-6 bg-yellow-400 text-gray-900 font-bold py-3 px-6 rounded-full shadow-lg">
-              Jackpot: 100 ETH
+              Jackpot: 100 LOT
             </div>
           </div>
         </div>

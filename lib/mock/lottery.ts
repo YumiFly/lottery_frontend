@@ -38,7 +38,7 @@ export const getMockLotteries = (): Lottery[] => {
       ticket_name: "Weekly Mega Draw",
       ticket_price: "0.01",
       betting_rules: "选择6个1-49之间的数字",
-      prize_structure: "一等奖: 50 ETH, 二等奖: 10 ETH, 三等奖: 5 ETH",
+      prize_structure: "一等奖: 50 LOT, 二等奖: 10 LOT, 三等奖: 5 LOT",
       contract_address: "0x1234567890abcdef1234567890abcdef12345678",
       created_at: "2023-02-01T00:00:00Z",
       updated_at: "2023-02-01T00:00:00Z",
@@ -49,7 +49,7 @@ export const getMockLotteries = (): Lottery[] => {
       ticket_name: "Daily Quick Draw",
       ticket_price: "0.001",
       betting_rules: "选择6个1-33之间的数字",
-      prize_structure: "一等奖: 5 ETH, 二等奖: 1 ETH, 三等奖: 0.5 ETH",
+      prize_structure: "一等奖: 5 LOT, 二等奖: 1 LOT, 三等奖: 0.5 LOT",
       contract_address: "0xabcdef1234567890abcdef1234567890abcdef12",
       created_at: "2023-02-02T00:00:00Z",
       updated_at: "2023-02-02T00:00:00Z",
@@ -60,7 +60,7 @@ export const getMockLotteries = (): Lottery[] => {
       ticket_name: "Monthly Jackpot",
       ticket_price: "0.05",
       betting_rules: "选择6个1-50之间的数字",
-      prize_structure: "一等奖: 100 ETH, 二等奖: 20 ETH, 三等奖: 10 ETH",
+      prize_structure: "一等奖: 100 LOT, 二等奖: 20 LOT, 三等奖: 10 LOT",
       contract_address: "0x7890abcdef1234567890abcdef1234567890abcd",
       created_at: "2023-02-03T00:00:00Z",
       updated_at: "2023-02-03T00:00:00Z",
@@ -263,7 +263,7 @@ export const getMockRecentWinners = () => {
       issue_number: "202304",
       winning_number: "7,14,22,36,41,49",
       winner_addr: "0x1a2...3b4c",
-      win_amount: "25 ETH",
+      win_amount: "25 LOT",
       ticket_name: "Weekly Mega Draw",
       win_date: "Apr 10, 2023",
     },
@@ -273,7 +273,7 @@ export const getMockRecentWinners = () => {
       issue_number: "202404",
       winning_number: "7,14,22,36,40,49",
       winner_addr: "0x5d6...7e8f",
-      win_amount: "3 ETH",
+      win_amount: "3 LOT",
       ticket_name: "Daily Quick Draw",
       win_date: "Apr 12, 2023",
     },
@@ -283,7 +283,7 @@ export const getMockRecentWinners = () => {
       issue_number: "202504",
       winning_number: "7,14,22,37,41,49",
       winner_addr: "0x9a0...b1c2",
-      win_amount: "75 ETH",
+      win_amount: "75 LOT",
       ticket_name: "Monthly Jackpot",
       win_date: "Apr 5, 2023",
     },
@@ -300,7 +300,7 @@ export const generateMoreMockLotteries = (count: number): Lottery[] => {
         "ticket_name|1": ["Special Draw", "Weekend Jackpot", "Flash Lottery", "Crypto Millions"],
         "ticket_price|0.001-0.1": 0.001,
         betting_rules: "选择6个1-50之间的数字",
-        prize_structure: "一等奖: 50 ETH, 二等奖: 10 ETH, 三等奖: 5 ETH",
+        prize_structure: "一等奖: 50 LOT, 二等奖: 10 LOT, 三等奖: 5 LOT",
         contract_address: () => `0x${Random.string("0123456789abcdef", 40)}`,
         created_at: () => Random.datetime("yyyy-MM-ddTHH:mm:ssZ"),
         updated_at: () => Random.datetime("yyyy-MM-ddTHH:mm:ssZ"),
@@ -396,14 +396,14 @@ export const convertResultToUIFormat = (result: LatestLotteryResults) => {
       year: "numeric",
     }),
     numbers: result.winning_numbers.split(",").map(Number),
-    jackpot: `${Math.floor(Math.random() * 100) + 5} ETH`, // 模拟奖金
+    jackpot: `${Math.floor(Math.random() * 100) + 5} LOT`, // 模拟奖金
     winners: Math.floor(Math.random() * 3), // 模拟获奖人数
     nextDraw: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
     }),
-    nextJackpot: `${Math.floor(Math.random() * 100) + 10} ETH`, // 模拟下次奖金
+    nextJackpot: `${Math.floor(Math.random() * 100) + 10} LOT`, // 模拟下次奖金
   }
 }
 
@@ -421,12 +421,12 @@ export const convertTicketToUIFormat = (ticket: LotteryTicket, lotteries: Lotter
     }),
     lottery:lottery?.ticket_name || "Unknown",
     numbers: ticket.bet_content,
-    price: `${ticket.purchase_amount} ETH`,
+    price: `${ticket.purchase_amount} LOT`,
     status: getTicketStatus(ticket, issue),
     drawDate: issue
       ? new Date(issue.draw_time).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
       : "Unknown",
-    prize: ticket.claim_tx_hash ? `${(Math.random() * 5).toFixed(2)} ETH` : undefined,
+    prize: ticket.claim_tx_hash ? `${(Math.random() * 5).toFixed(2)} LOT` : undefined,
   }
 }
 

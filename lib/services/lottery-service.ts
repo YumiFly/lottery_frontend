@@ -177,7 +177,7 @@ export async function fetchPastDraws(type = "all"): Promise<any[]> {
         }),
         type: result.ticket_name,
         numbers: result.winning_numbers,
-        jackpot: `${Math.floor(Math.random() * 100) + 5} ETH`, // 模拟奖金
+        jackpot: `${Math.floor(Math.random() * 100) + 5} LOT`, // 模拟奖金
         winners: Math.floor(Math.random() * 5), // 模拟获奖人数
         txHash: `0x${Math.random().toString(16).substring(2, 10)}...`,
       }))
@@ -198,7 +198,7 @@ export async function fetchPastDraws(type = "all"): Promise<any[]> {
       date: new Date(result.draw_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
       type: result.ticket_name,
       numbers: result.winning_numbers,
-      jackpot: `${Math.floor(Math.random() * 100) + 5} ETH`, // 模拟奖金，实际应从API获取
+      jackpot: `${Math.floor(Math.random() * 100) + 5} LOT`, // 模拟奖金，实际应从API获取
       winners: Math.floor(Math.random() * 5), // 模拟获奖人数，实际应从API获取
       txHash: `0x${Math.random().toString(16).substring(2, 10)}...`, // 模拟交易哈希，实际应从API获取
     }))

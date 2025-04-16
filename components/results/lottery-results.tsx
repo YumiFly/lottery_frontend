@@ -12,26 +12,26 @@ export function LotteryResults() {
     weekly: {
       drawDate: "April 10, 2023",
       numbers: [7, 14, 22, 36, 41, 49],
-      jackpot: "50 ETH",
+      jackpot: "50 LOT",
       winners: 2,
       nextDraw: "April 17, 2023",
-      nextJackpot: "55 ETH",
+      nextJackpot: "55 LOT",
     },
     daily: {
       drawDate: "April 12, 2023",
       numbers: [3, 11, 17, 25, 29, 33],
-      jackpot: "5 ETH",
+      jackpot: "5 LOT",
       winners: 1,
       nextDraw: "April 13, 2023",
-      nextJackpot: "5.5 ETH",
+      nextJackpot: "5.5 LOT",
     },
     monthly: {
       drawDate: "April 1, 2023",
       numbers: [5, 18, 23, 37, 42, 50],
-      jackpot: "100 ETH",
+      jackpot: "100 LOT",
       winners: 0,
       nextDraw: "May 1, 2023",
-      nextJackpot: "125 ETH",
+      nextJackpot: "125 LOT",
     },
   }
 
