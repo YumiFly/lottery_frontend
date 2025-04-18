@@ -21,6 +21,7 @@ export interface FeaturedLottery{
   type_id: string
   ticket_name: string
   ticket_price: string
+  ticket_supply: number
   betting_rules: string
   prize_structure: string
   contract_address: string
@@ -200,6 +201,7 @@ export const createLottery = async (lotteryData: LotteryRequest): Promise<Lotter
 export const getLotteries = async (): Promise<Lottery[]> => {
   try {
     const response = await api.get("/lottery/lottery")
+    console.log("lottery.ts response data :",response.data.data)
     return response.data.data
   } catch (error) {
     console.error("获取彩票列表失败:", error)
@@ -222,6 +224,7 @@ export const createLotteryIssue = async (issueData: LotteryIssueRequest): Promis
 export const getLatestIssue = async (lotteryId: string): Promise<LotteryIssue> => {
   try {
     const response = await api.get(`/lottery/issues/latest/${lotteryId}`)
+    console.log("latest issue response data :",response.data.data)
     return response.data.data
   } catch (error) {
     console.error("获取最近发行信息失败:", error)

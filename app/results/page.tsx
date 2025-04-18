@@ -4,8 +4,6 @@ import { useState, useEffect } from "react"
 import { LotteryResults } from "@/components/results/lottery-results"
 import { PastDraws } from "@/components/results/past-draws"
 import { Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { RefreshCw } from "lucide-react"
 import { useLanguage } from "@/hooks/use-language"
 
 export default function ResultsPage() {

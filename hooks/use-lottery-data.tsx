@@ -225,7 +225,6 @@ export function LotteryDataProvider({ children }: { children: React.ReactNode })
 
       // 保存到本地存储
       storeData(LOTTERY_DATA_STORAGE_KEY, data)
-      loadLotteryIssues()
     } catch (error) {
       console.error("Failed to fetch lotteries:", error)
       setErrorLotteries("Failed to load lotteries. Please try again.")
