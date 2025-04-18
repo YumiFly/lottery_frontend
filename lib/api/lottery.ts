@@ -33,6 +33,7 @@ export interface Lottery {
   type_id: string
   ticket_name: string
   ticket_price: string
+  ticket_supply: number
   betting_rules: string
   prize_structure: string
   contract_address: string
@@ -48,7 +49,8 @@ export interface LotteryRequest {
   ticket_supply: number
   betting_rules: string
   prize_structure: string
-  contract_address: string
+  register_address: string
+  rollout_contract_address: string
 }
 
 // 彩票期号数据类型
@@ -119,6 +121,25 @@ export interface RecentWinners {
   win_date: string
 }
 
+export const drawLottery = async (issueId: string): Promise<number> =>{
+  try {
+    // 使用查询参数传递 issue_id
+    const response = await api.post(`/lottery/draw`, null, {
+      params: {
+        issue_id: issueId,
+      },
+    });
+    // 返回 HTTP 状态码（200 表示成功）
+    return response.status; // 或直接返回 code（根据你的需求）
+  } catch (error: any) {
+    console.error("开奖失败:", error);
+    // 抛出更具体的错误信息
+    throw new Error(
+      error.response?.data?.message || error.message || "Failed to draw lottery"
+    );
+  }
+}
+
 // 获取期号信息列表
 export const getIssueById = async (issueId: string): Promise<LotteryIssue> => {
   try {
@@ -156,6 +177,7 @@ export const createLotteryType = async (typeData: LotteryTypeRequest): Promise<L
 export const getLotteryTypes = async (): Promise<LotteryType[]> => {
   try {
     const response = await api.get("/lottery/types")
+    console.log("lottery.ts response data :",response.data.data)
     return response.data.data
   } catch (error) {
     console.error("获取彩票类型列表失败:", error)

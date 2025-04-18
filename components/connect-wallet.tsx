@@ -13,13 +13,13 @@ import {
 import { Wallet, Loader2 } from "lucide-react"
 import { useLanguage } from "@/hooks/use-language"
 import { useWallet } from "@/hooks/use-wallet"
-import { useKyc } from "@/hooks/use-kyc"
+import { useUserState } from "@/hooks/use-user-state"
 
 export function ConnectWallet() {
   const [open, setOpen] = useState(false)
   const { t } = useLanguage()
   const { connect, isLoading } = useWallet()
-  const { isVerified } = useKyc()
+  const { isVerified } = useUserState()
 
   const handleConnect = async (walletType: string) => {
     try {

@@ -14,10 +14,6 @@ import dayjs from 'dayjs'
 import { useWallet } from "@/hooks/use-wallet"
 
 const extractBettingRules = (rules: string): { maxNumbers: number; numberRange: number } => {
-  const parts = rules.split(',')
-  const maxNumbersMatch = parts.find((part) => part.includes('numbers'))
-  const rangeMatch = parts.find((part) => part.includes('from'))
-
   const maxNumbers = 3
   const numberRange = 36
 

@@ -7,7 +7,7 @@ import { ConnectWallet } from "@/components/connect-wallet"
 import { LanguageSwitcher } from "@/components/language-switcher"
 import { useLanguage } from "@/hooks/use-language"
 import { useWallet } from "@/hooks/use-wallet"
-import { useKyc } from "@/hooks/use-kyc"
+import { useUserState } from "@/hooks/use-user-state"
 import { Menu, X, LogOut, UserCheck, UserX } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -15,7 +15,7 @@ export function Header() {
   const pathname = usePathname()
   const { t } = useLanguage()
   const { isConnected, address, disconnect } = useWallet()
-  const { isVerified, isAdmin } = useKyc()
+  const { isVerified, isAdmin } = useUserState()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
 

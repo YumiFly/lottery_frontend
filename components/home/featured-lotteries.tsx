@@ -6,60 +6,14 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Clock, Ticket, Loader2 } from "lucide-react"
+import { Clock, Ticket, Loader2,RefreshCw } from "lucide-react"
 import { useLanguage } from "@/hooks/use-language"
-import { fetchLotteries, type FeaturedLottery } from "@/lib/services/lottery-service"
-
+import { useLotteryData } from "@/hooks/use-lottery-data"
 export function FeaturedLotteries() {
   const { t } = useLanguage()
-  const [lotteries, setLotteries] = useState<FeaturedLottery[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { lotteries, isLoadingLotteries, errorLotteries, refreshLotteries } = useLotteryData()
 
-  useEffect(() => {
-    const loadLotteries = async () => {
-      try {
-        setIsLoading(true)
-        const data = await fetchLotteries()
-        setLotteries(data)
-        setError(null)
-      } catch (err) {
-        console.error("Failed to fetch lotteries:", err)
-        setError("Failed to load lotteries. Using mock data instead.")
-
-        // 如果获取失败，尝试使用模拟数据
-        try {
-          // 导入模拟数据函数
-          const { getMockLotteries, getMockLotteryIssues, convertLotteryToUIFormat } = await import(
-            "@/lib/mock/lottery"
-          )
-
-          const mockLotteries = getMockLotteries()
-          const mockIssues = getMockLotteryIssues()
-
-          // 转换为UI格式
-          const data = mockLotteries.map((lottery) => {
-            const latestIssue = mockIssues.find(
-              (issue) => issue.lottery_id === lottery.lottery_id && issue.status === "OPEN",
-            )
-            return convertLotteryToUIFormat(lottery, latestIssue)
-          })
-
-          setLotteries(data)
-          setError(null)
-        } catch (mockErr) {
-          console.error("Failed to load mock lotteries:", mockErr)
-          setError("Failed to load lotteries. Please try again later.")
-        }
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadLotteries()
-  }, [])
-
-  if (isLoading) {
+  if (isLoadingLotteries) {
     return (
       <section className="py-8 text-center">
         <Loader2 className="h-8 w-8 animate-spin mx-auto" />
@@ -68,11 +22,12 @@ export function FeaturedLotteries() {
     )
   }
 
-  if (error) {
+  if (errorLotteries) {
     return (
       <section className="py-8 text-center">
-        <p className="text-red-500">{error}</p>
-        <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+        <p className="text-red-500">{errorLotteries}</p>
+        <Button variant="outline" className="mt-4" onClick={refreshLotteries}>
+          <RefreshCw className="mr-2 h-4 w-4" />
           {t("common.retry")}
         </Button>
       </section>

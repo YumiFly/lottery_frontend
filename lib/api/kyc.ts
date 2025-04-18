@@ -76,6 +76,7 @@ export const getCustomers = async (): Promise<Customer[]> => {
 export const getCustomerById = async (customerAddress: string): Promise<Customer> => {
   try {
     const response = await api.get(`/customers/${customerAddress}`)
+    console.log("获取用户信息成功:", response.data)
     return response.data.data
   } catch (error) {
     console.error("获取用户信息失败:", error)

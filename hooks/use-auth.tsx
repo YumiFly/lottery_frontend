@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useEffect, createContext, useContext } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { useWallet } from "@/hooks/use-wallet"
-import { useKyc } from "@/hooks/use-kyc"
+import { useUserState } from "@/hooks/use-user-state"
 import { useToast } from "@/hooks/use-toast"
 import { useLanguage } from "@/hooks/use-language"
 
@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const pathname = usePathname()
   const { isConnected } = useWallet()
-  const { isVerified, isAdmin } = useKyc()
+  const { isVerified, isAdmin } = useUserState()
   const { toast } = useToast()
   const { t } = useLanguage()
   const [role, setRole] = useState<Role>("guest")
