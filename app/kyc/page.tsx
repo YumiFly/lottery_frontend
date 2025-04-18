@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useWallet } from "@/hooks/use-wallet"
-import { useKyc } from "@/hooks/use-kyc"
+import { useUserState } from "@/hooks/use-user-state"
 import { ConnectWallet } from "@/components/connect-wallet"
 import { KycRegistrationForm } from "@/components/kyc/kyc-registration-form"
 import { KycStatus } from "@/components/kyc/kyc-status"
@@ -11,7 +11,7 @@ import { KycStatus } from "@/components/kyc/kyc-status"
 export default function KycPage() {
   const router = useRouter()
   const { isConnected, address } = useWallet()
-  const { customer, isVerified, isLoading } = useKyc()
+  const { customer, isVerified, isLoading } = useUserState()
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -34,10 +34,6 @@ export default function KycPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-8">
-          {/* <h1 className="text-3xl font-bold">KYC Verification</h1>
-          <p className="text-gray-600 mt-2">Complete your KYC verification to access all features of the platform</p> */}
-        </div>
 
         {!isConnected ? (
           <div className="text-center py-12 bg-gray-50 rounded-lg">

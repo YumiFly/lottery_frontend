@@ -21,10 +21,6 @@ export default function AdminRegisterPage() {
     <div className="container mx-auto px-4 py-8">
       {isConnected ? (
         <div className="max-w-md mx-auto space-y-8">
-          {/* <div className="text-center">
-            <h1 className="text-3xl font-bold mb-2">{t("admin.register.title")}</h1>
-            <p className="text-muted-foreground">{t("admin.register.description")}</p>
-          </div> */}
           <AdminRegistration />
         </div>
       ) : (

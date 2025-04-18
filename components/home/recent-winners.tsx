@@ -1,52 +1,37 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Trophy, Loader2 } from "lucide-react"
+import { Trophy, Loader2, RefreshCw } from "lucide-react"
 import { useLanguage } from "@/hooks/use-language"
-import { fetchRecentWinners, type RecentWinners} from "@/lib/services/lottery-service"
+import { useLotteryData } from "@/hooks/use-lottery-data"
 
 export function RecentWinners() {
   const { t } = useLanguage()
-  const [winners, setWinners] = useState<RecentWinners[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const { recentWinners, isLoadingWinners, errorWinners, refreshWinners } = useLotteryData()
 
-  useEffect(() => {
-    const loadWinners = async () => {
-      try {
-        setIsLoading(true)
-        const data = await fetchRecentWinners()
-        setWinners(data)
-        setError(null)
-      } catch (err) {
-        console.error("Failed to fetch winners:", err)
-        setError("Failed to load recent winners. Please try again later.")
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadWinners()
-  }, [])
-
-  if (isLoading) {
+  if (isLoadingWinners) {
     return (
       <section className="py-12 text-center">
         <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-        <p className="mt-2 text-gray-500">Loading winners...</p>
+        <p className="mt-2 text-gray-500">{t("common.loading")}</p>
       </section>
     )
   }
 
-  if (error) {
+  if (errorWinners) {
     return (
       <section className="py-12 text-center">
-        <p className="text-red-500">{error}</p>
+        <p className="text-red-500">{errorWinners}</p>
+        <Button variant="outline" className="mt-4" onClick={refreshWinners}>
+          <RefreshCw className="mr-2 h-4 w-4" />
+          {t("common.retry")}
+        </Button>
       </section>
     )
   }
+
 
   return (
     <section className="py-12">
@@ -55,7 +40,7 @@ export function RecentWinners() {
         <p className="text-gray-600 max-w-2xl mx-auto">{t("home.recentWinners.description")}</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {winners.map((winner, index) => (
+        {recentWinners.map((winner, index) => (
           <Card key={index} className="overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
               <CardTitle className="flex items-center">

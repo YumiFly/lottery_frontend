@@ -4,14 +4,14 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { LotteryManagement } from "@/components/admin/lottery-management"
 import { ConnectWallet } from "@/components/connect-wallet"
-import { useWallet } from "@/hooks/use-wallet"
-import { useKyc } from "@/hooks/use-kyc"
+import { useUserState } from "@/hooks/use-user-state"
 import { useLanguage } from "@/hooks/use-language"
 import { Loader2 } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
 
 export default function AdminManagePage() {
-  const { isConnected } = useWallet()
-  const { isAdmin, isLoading: isKycLoading } = useKyc()
+  const { isConnected, isAdmin, isLoading } = useUserState()
   const { t } = useLanguage()
   const router = useRouter()
   const [mounted, setMounted] = useState(false)
@@ -21,12 +21,12 @@ export default function AdminManagePage() {
   }, [])
 
   useEffect(() => {
-    if (mounted && isConnected && !isKycLoading && !isAdmin) {
+    if (mounted && isConnected && !isLoading && !isAdmin) {
       router.push("/admin/register")
     }
-  }, [mounted, isConnected, isKycLoading, isAdmin, router])
+  }, [mounted, isConnected, isLoading, isAdmin, router])
 
-  if (!mounted || isKycLoading) {
+  if (!mounted || isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -39,6 +39,12 @@ export default function AdminManagePage() {
       {isConnected ? (
         isAdmin ? (
           <div className="space-y-12">
+            <Alert className="bg-yellow-50 border-yellow-200">
+              <AlertCircle className="h-4 w-4 text-yellow-600" />
+              <AlertTitle>{t("common.warning")}</AlertTitle>
+              <AlertDescription>{t("admin.manage.adminOnlyFeature")}</AlertDescription>
+            </Alert>
+
             <LotteryManagement />
           </div>
         ) : null

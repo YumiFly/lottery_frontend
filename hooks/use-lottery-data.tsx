@@ -9,6 +9,10 @@ import {
   fetchRecentWinners,
   fetchPrizePool,
   fetchTicketPurchases,
+  fetchLotteryTypes,
+  createNewLottery,
+  createNewLotteryIssue,
+  drawLottery,
 } from "@/lib/services/lottery-service"
 import { useWallet } from "@/hooks/use-wallet"
 
@@ -18,6 +22,8 @@ const LOTTERY_RESULTS_STORAGE_KEY = "w3lottery_lottery_results"
 const PAST_DRAWS_STORAGE_KEY = "w3lottery_past_draws"
 const RECENT_WINNERS_STORAGE_KEY = "w3lottery_recent_winners"
 const PRIZE_POOL_STORAGE_KEY = "w3lottery_prize_pool"
+const LOTTERY_TYPES_STORAGE_KEY = "w3lottery_lottery_types"
+const LOTTERY_ISSUES_STORAGE_KEY = "w3lottery_lottery_issues"
 
 // 定义缓存过期时间（毫秒）
 const CACHE_EXPIRY = {
@@ -27,6 +33,8 @@ const CACHE_EXPIRY = {
   recentWinners: 15 * 60 * 1000, // 15分钟
   prizePool: 5 * 60 * 1000, // 5分钟
   tickets: 2 * 60 * 1000, // 2分钟
+  types: 60 * 60 * 1000, // 1小时
+  issues: 5 * 60 * 1000, // 5分钟
 }
 
 // 定义缓存数据类型
@@ -43,24 +51,35 @@ interface LotteryDataContextType {
   recentWinners: any[]
   prizePool: number
   ticketPurchases: any[]
+  lotteryTypes: any[]
+  lotteryIssues: any[]
   isLoadingLotteries: boolean
   isLoadingResults: boolean
   isLoadingPastDraws: boolean
   isLoadingWinners: boolean
   isLoadingPrizePool: boolean
   isLoadingTickets: boolean
+  isLoadingTypes: boolean
+  isLoadingIssues: boolean
   errorLotteries: string | null
   errorResults: string | null
   errorPastDraws: string | null
   errorWinners: string | null
   errorPrizePool: string | null
   errorTickets: string | null
+  errorTypes: string | null
+  errorIssues: string | null
   refreshLotteries: () => Promise<void>
   refreshResults: () => Promise<void>
   refreshPastDraws: () => Promise<void>
   refreshWinners: () => Promise<void>
   refreshPrizePool: () => Promise<void>
   refreshTickets: () => Promise<void>
+  refreshTypes: () => Promise<void>
+  refreshIssues: () => Promise<void>
+  createLottery: (lotteryData: any) => Promise<any>
+  createIssue: (lotteryId: string, issue_numbers: string, saleEndTime: string) => Promise<any>
+  executeDraw: (issueId: string) => Promise<number |undefined>
 }
 
 // 创建上下文
@@ -71,24 +90,35 @@ const LotteryDataContext = createContext<LotteryDataContextType>({
   recentWinners: [],
   prizePool: 0,
   ticketPurchases: [],
+  lotteryTypes: [],
+  lotteryIssues: [],
   isLoadingLotteries: false,
   isLoadingResults: false,
   isLoadingPastDraws: false,
   isLoadingWinners: false,
   isLoadingPrizePool: false,
   isLoadingTickets: false,
+  isLoadingTypes: false,
+  isLoadingIssues: false,
   errorLotteries: null,
   errorResults: null,
   errorPastDraws: null,
   errorWinners: null,
   errorPrizePool: null,
   errorTickets: null,
+  errorTypes: null,
+  errorIssues: null,
   refreshLotteries: async () => {},
   refreshResults: async () => {},
   refreshPastDraws: async () => {},
   refreshWinners: async () => {},
   refreshPrizePool: async () => {},
   refreshTickets: async () => {},
+  refreshTypes: async () => {},
+  refreshIssues: async () => {},
+  createLottery: async () => ({}),
+  createIssue: async () => ({}),
+  executeDraw: async () => undefined,
 })
 
 // 从本地存储获取数据
@@ -163,6 +193,16 @@ export function LotteryDataProvider({ children }: { children: React.ReactNode })
   const [isLoadingTickets, setIsLoadingTickets] = useState(false)
   const [errorTickets, setErrorTickets] = useState<string | null>(null)
 
+  // 彩票类型状态
+  const [lotteryTypes, setLotteryTypes] = useState<any[]>([])
+  const [isLoadingTypes, setIsLoadingTypes] = useState(false)
+  const [errorTypes, setErrorTypes] = useState<string | null>(null)
+
+  // 彩票期号状态
+  const [lotteryIssues, setLotteryIssues] = useState<any[]>([])
+  const [isLoadingIssues, setIsLoadingIssues] = useState(false)
+  const [errorIssues, setErrorIssues] = useState<string | null>(null)
+
   // 加载彩票列表
   const loadLotteries = useCallback(async (forceRefresh = false) => {
     setIsLoadingLotteries(true)
@@ -185,6 +225,7 @@ export function LotteryDataProvider({ children }: { children: React.ReactNode })
 
       // 保存到本地存储
       storeData(LOTTERY_DATA_STORAGE_KEY, data)
+      loadLotteryIssues()
     } catch (error) {
       console.error("Failed to fetch lotteries:", error)
       setErrorLotteries("Failed to load lotteries. Please try again.")
@@ -356,6 +397,110 @@ export function LotteryDataProvider({ children }: { children: React.ReactNode })
     [address],
   )
 
+  // 加载彩票类型
+  const loadLotteryTypes = useCallback(async (forceRefresh = false) => {
+    setIsLoadingTypes(true)
+    setErrorTypes(null)
+
+    try {
+      // 如果不是强制刷新，先尝试从本地存储获取
+      if (!forceRefresh) {
+        const storedTypes = getStoredData<any[]>(LOTTERY_TYPES_STORAGE_KEY, CACHE_EXPIRY.types)
+        console.log("storedTypes", storedTypes)
+        if (storedTypes && storedTypes.length > 0) {
+          setLotteryTypes(storedTypes)
+          setIsLoadingTypes(false)
+          return
+        }
+      }
+      console.log("Fetching lottery types from API...");
+      // 从API获取数据
+      const data = await fetchLotteryTypes()
+      setLotteryTypes(data)
+
+      // 保存到本地存储
+      storeData(LOTTERY_TYPES_STORAGE_KEY, data)
+    } catch (error) {
+      console.error("Failed to fetch lottery types:", error)
+      setErrorTypes("Failed to load lottery types. Please try again.")
+    } finally {
+      setIsLoadingTypes(false)
+    }
+  }, [])
+
+  // 加载彩票期号
+  const loadLotteryIssues = useCallback(async (forceRefresh = false) => {
+    setIsLoadingIssues(true)
+    setErrorIssues(null)
+
+    try {
+      // 如果不是强制刷新，先尝试从本地存储获取
+      if (!forceRefresh) {
+        const storedIssues = getStoredData<any[]>(LOTTERY_ISSUES_STORAGE_KEY, CACHE_EXPIRY.issues)
+        if (storedIssues && storedIssues.length > 0) {
+          setLotteryIssues(storedIssues)
+          setIsLoadingIssues(false)
+          return
+        }
+      }
+
+      // 从API获取数据
+      // const data = await fetchLotteries()
+      setLotteryIssues(lotteries)
+
+      // 保存到本地存储
+      storeData(LOTTERY_ISSUES_STORAGE_KEY, lotteries)
+    } catch (error) {
+      console.error("Failed to fetch lottery issues:", error)
+      setErrorIssues("Failed to load lottery issues. Please try again.")
+    } finally {
+      setIsLoadingIssues(false)
+    }
+  }, [])
+
+  // 创建彩票
+  const createLottery = async (lotteryData: any) => {
+    try {
+      const result = await createNewLottery(lotteryData)
+      // 刷新彩票列表
+      await loadLotteries(true)
+      return result
+    } catch (error) {
+      console.error("Failed to create lottery:", error)
+      throw error
+    }
+  }
+
+  // 创建彩票期号 - 更新函数签名，添加issue_numbers参数
+  const createIssue = async (lotteryId: string, issue_numbers: string, saleEndTime: string) => {
+    try {
+      const result = await createNewLotteryIssue(lotteryId, issue_numbers, saleEndTime)
+      // 刷新彩票期号
+      await loadLotteries(true)
+      await loadLotteryIssues(true)
+      return result
+    } catch (error) {
+      console.error("Failed to create lottery issue:", error)
+      throw error
+    }
+  }
+
+  // 执行开奖 - 更新返回类型为number
+  const executeDraw = async (issueId: string): Promise<number|undefined> => {
+    try {
+      const statusCode = await drawLottery(issueId)
+      // 如果开奖成功，刷新相关数据
+      // if (statusCode === 200) {
+      //   // 刷新彩票期号和历史抽奖
+      //   await Promise.all([loadLotteryIssues(true), loadPastDraws(true), loadLotteryResults(true)])
+      // }
+      return statusCode
+    } catch (error) {
+      console.error("Failed to execute draw:", error)
+      throw error
+    }
+  }
+
   // 初始化加载
   useEffect(() => {
     loadLotteries()
@@ -363,7 +508,17 @@ export function LotteryDataProvider({ children }: { children: React.ReactNode })
     loadPastDraws()
     loadRecentWinners()
     loadPrizePool()
-  }, [loadLotteries, loadLotteryResults, loadPastDraws, loadRecentWinners, loadPrizePool])
+    loadLotteryTypes()
+    loadLotteryIssues()
+  }, [
+    loadLotteries,
+    loadLotteryResults,
+    loadPastDraws,
+    loadRecentWinners,
+    loadPrizePool,
+    loadLotteryTypes,
+    loadLotteryIssues,
+  ])
 
   // 当钱包地址变化时加载票据
   useEffect(() => {
@@ -377,6 +532,8 @@ export function LotteryDataProvider({ children }: { children: React.ReactNode })
   const refreshWinners = () => loadRecentWinners(true)
   const refreshPrizePool = () => loadPrizePool(true)
   const refreshTickets = () => loadTicketPurchases(true)
+  const refreshTypes = () => loadLotteryTypes(true)
+  const refreshIssues = () => loadLotteryIssues(true)
 
   const value = {
     lotteries,
@@ -385,24 +542,35 @@ export function LotteryDataProvider({ children }: { children: React.ReactNode })
     recentWinners,
     prizePool,
     ticketPurchases,
+    lotteryTypes,
+    lotteryIssues,
     isLoadingLotteries,
     isLoadingResults,
     isLoadingPastDraws,
     isLoadingWinners,
     isLoadingPrizePool,
     isLoadingTickets,
+    isLoadingTypes,
+    isLoadingIssues,
     errorLotteries,
     errorResults,
     errorPastDraws,
     errorWinners,
     errorPrizePool,
     errorTickets,
+    errorTypes,
+    errorIssues,
     refreshLotteries,
     refreshResults,
     refreshPastDraws,
     refreshWinners,
     refreshPrizePool,
     refreshTickets,
+    refreshTypes,
+    refreshIssues,
+    createLottery,
+    createIssue,
+    executeDraw,
   }
 
   return <LotteryDataContext.Provider value={value}>{children}</LotteryDataContext.Provider>

@@ -11,6 +11,7 @@ import {
   createLotteryType as apiCreateLotteryType,
   getRecentWinners as apiGetRecentWinners,
   getIssueById as apiGetIssueById,
+  drawLottery as apiDrawLottery,
   type Lottery,
   type LotteryType,
   type LotteryIssue,
@@ -43,6 +44,12 @@ import {
 // 环境变量，控制是否使用模拟数据
 //const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK !== "false" // Default to using mock data unless explicitly set to "false"
 const USE_MOCK = false
+
+// 开奖
+export async function drawLottery(lotteryId: string): Promise<number | undefined> {
+  console.log("Drawing lottery...")
+  return apiDrawLottery(lotteryId)
+}
 // 获取彩票类型列表
 export async function fetchLotteryTypes(): Promise<LotteryType[]> {
   console.log("Fetching lottery types...",USE_MOCK)
@@ -60,18 +67,6 @@ export async function fetchLotteryTypes(): Promise<LotteryType[]> {
 export async function fetchLotteries(): Promise<any[]> {
   try {
     console.log("Fetching lotteries...",USE_MOCK)
-    if (USE_MOCK) {
-      const mockLotteries = getMockLotteries()
-      const mockIssues = getMockLotteryIssues()
-
-      // 转换为UI格式
-      return mockLotteries.map((lottery) => {
-        const latestIssue = mockIssues.find(
-          (issue) => issue.lottery_id === lottery.lottery_id && issue.status === "OPEN",
-        )
-        return convertLotteryToUIFormat(lottery, latestIssue)
-      })
-    }
 
     // 实际API调用
     const lotteries = await apiGetLotteries()
@@ -81,6 +76,10 @@ export async function fetchLotteries(): Promise<any[]> {
     for (const lottery of lotteries) {
       try {
         const latestIssue = await apiGetLatestIssue(lottery.lottery_id)
+        if (!latestIssue) {
+          console.error(`彩票 ${lottery.lottery_id} 没有最新期号`)
+          continue
+        }
         result.push(convertLotteryToUIFormat(lottery, latestIssue))
       } catch (error) {
         console.error(`获取彩票 ${lottery.lottery_id} 的最新期号失败:`, error)
@@ -217,21 +216,6 @@ export async function fetchPastDraws(type = "all"): Promise<any[]> {
 // 获取购买记录
 export async function fetchTicketPurchases(address: string, status = "all"): Promise<any[]> {
   try {
-    if (USE_MOCK) {
-      const mockTickets = getMockUserTickets(address)
-      const mockLotteries = getMockLotteries()
-      const mockIssues = getMockLotteryIssues()
-
-      // 转换为UI显示格式
-      const purchases = mockTickets.map((ticket) => convertTicketToUIFormat(ticket, mockLotteries, mockIssues))
-
-      if (status === "all") {
-        return purchases
-      } else {
-        return purchases.filter((purchase) => purchase.status.toLowerCase() === status.toLowerCase())
-      }
-    }
-
     // 实际API调用
     const tickets = await apiGetUserTickets(address)
     const lotteries = await apiGetLotteries()
@@ -357,25 +341,6 @@ export async function createNewLotteryType(typeName: string, description: string
 // 创建彩票
 export async function createNewLottery(lotteryData: LotteryRequest): Promise<Lottery> {
   try {
-    if (USE_MOCK) {
-      // 模拟创建成功
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({
-            lottery_id: `${Date.now()}`,
-            type_id: lotteryData.type_id,
-            ticket_name: lotteryData.ticket_name,
-            ticket_price: "10", // 修改为 number
-            betting_rules: lotteryData.betting_rules,
-            prize_structure: lotteryData.prize_structure,
-            contract_address: "0x1234567890abcdef1234567890abcdef12345678",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-        }, 1000)
-      })
-    }
-
     // 实际API调用
     return apiCreateLottery(lotteryData)
   } catch (error) {
@@ -441,15 +406,6 @@ export async function loadMoreLotteries(count = 3): Promise<any[]> {
 
 // 加载更多购买记录
 export async function loadMoreTicketPurchases(address: string, count = 5): Promise<any[]> {
-  if (USE_MOCK) {
-    // 使用模拟数据
-    const mockTickets = generateMoreMockTickets(count, address)
-    const mockLotteries = getMockLotteries()
-    const mockIssues = getMockLotteryIssues()
-
-    return mockTickets.map((ticket) => convertTicketToUIFormat(ticket, mockLotteries, mockIssues))
-  }
-
   // 实际应用中，这里可能需要调用分页API
   return []
 }

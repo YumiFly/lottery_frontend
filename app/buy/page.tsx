@@ -5,6 +5,7 @@ import { LotteryPurchase } from "@/components/buy/lottery-purchase"
 import { ConnectWallet } from "@/components/connect-wallet"
 import { useWallet } from "@/hooks/use-wallet"
 import { useLanguage } from "@/hooks/use-language"
+import { Loader2 } from "lucide-react"
 
 export default function BuyPage() {
   const { isConnected } = useWallet()
@@ -22,11 +23,11 @@ export default function BuyPage() {
     <div className="container mx-auto px-4 py-8">
       {isConnected ? (
         <div className="space-y-12">
-          {/* <div className="text-center">
+          <div className="text-center">
             <h1 className="text-3xl font-bold mb-2">{t("buy.title")}</h1>
             <p className="text-muted-foreground">{t("buy.description")}</p>
-          </div> */}
-          <LotteryPurchase />
+          </div>
+          <LotteryPurchase/>
         </div>
       ) : (
         <div className="max-w-md mx-auto text-center py-16 space-y-6">

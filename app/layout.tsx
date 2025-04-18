@@ -4,7 +4,8 @@ import { WagmiConfig } from "./providers/wagmi-provider"
 import { ThemeProvider } from "@/components/theme-provider"
 import { LanguageProvider } from "@/hooks/use-language"
 import { WalletProvider } from "@/hooks/use-wallet"
-import { AuthProvider } from "@/hooks/use-auth"
+import { UserStateProvider } from "@/hooks/use-user-state"
+import { LotteryDataProvider } from "@/hooks/use-lottery-data"
 import { Toaster } from "@/components/ui/toaster"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
@@ -30,14 +31,16 @@ export default function RootLayout({
           <LanguageProvider>
             <WagmiConfig>
               <WalletProvider>
-              <AuthProvider>
+              <UserStateProvider>
+                <LotteryDataProvider>
                 <div className="flex flex-col min-h-screen">
                   <Header />
                   <main className="flex-1">{children}</main>
                   <Footer />
                 </div>
                 <Toaster />
-              </AuthProvider>
+                </LotteryDataProvider>
+              </UserStateProvider>
               </WalletProvider>
             </WagmiConfig>
           </LanguageProvider>

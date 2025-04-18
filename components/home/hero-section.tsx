@@ -3,10 +3,15 @@
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, Loader2 } from "lucide-react"
 import { useLanguage } from "@/hooks/use-language"
 
-export function HeroSection() {
+interface HeroSectionProps {
+  prizePool: number
+  isLoading: boolean
+}
+
+export function HeroSection({ prizePool, isLoading }: HeroSectionProps) {
   const { t } = useLanguage()
 
   return (
@@ -38,7 +43,14 @@ export function HeroSection() {
               />
             </div>
             <div className="absolute -bottom-6 -left-6 bg-yellow-400 text-gray-900 font-bold py-3 px-6 rounded-full shadow-lg">
-              Jackpot: 100 LOT
+              {isLoading ? (
+                <div className="flex items-center">
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Loading...
+                </div>
+              ) : (
+                `Jackpot: ${prizePool} LOT`
+              )}
             </div>
           </div>
         </div>
