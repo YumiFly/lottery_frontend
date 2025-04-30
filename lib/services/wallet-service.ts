@@ -10,17 +10,22 @@ import {
   type AdminApplication,
 } from "@/lib/mock/wallet";
 
+import { isUserAdmin } from "@/lib/services/kyc-service"
+
 // const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 const USE_MOCK = false;
 
 // 获取钱包状态
 export async function getWalletStatus(): Promise<WalletState> {
-  if (USE_MOCK) {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(getWalletState());
-      }, 200);
-    });
+  const manuallyConnected = localStorage.getItem("isWalletConnected") === "true";
+
+  if (!manuallyConnected) {
+    // ❌ 如果用户未主动连接，不自动连接钱包
+    return {
+      isConnected: false,
+      isAdmin: false,
+      address: null,
+    };
   }
 
   if (typeof window.ethereum === "undefined") {
@@ -71,6 +76,8 @@ export async function connectWallet(walletType: string): Promise<WalletState> {
       const address = await signer.getAddress(); // 获取地址
       const isAdmin = await checkAdminStatus(address); // 使用获取的地址
 
+      localStorage.setItem("isWalletConnected", "true"); // ✅ 设置连接标志位
+
       return {
         isConnected: true,
         isAdmin,
@@ -99,6 +106,8 @@ export async function disconnectWallet(): Promise<WalletState> {
     return mockDisconnectWallet();
   }
 
+  localStorage.removeItem("isWalletConnected"); // ❌ 清除连接标志位
+
   return {
     isConnected: false,
     isAdmin: false,
@@ -116,8 +125,9 @@ export async function checkAdminStatus(address: string): Promise<boolean> {
   // 示例：假设管理员地址存储在合约中
   // const contract = new ethers.Contract(contractAddress, contractABI, provider);
   // return contract.isAdmin(address);
+  return isUserAdmin(address);
 
-  return true; // 替换为实际的管理员检查逻辑
+  //return true; // ⚡️ 示例中默认返回 true
 }
 
 // 提交管理员申请
@@ -130,5 +140,5 @@ export async function submitAdminApplication(application: AdminApplication): Pro
   // 示例：假设管理员申请通过合约提交
   // const contract = new ethers.Contract(contractAddress, contractABI, signer);
   // await contract.applyForAdmin(application.reason);
-  return true; // 替换为实际的管理员申请逻辑
+  return true; // ⚡️ 示例中默认返回 true
 }

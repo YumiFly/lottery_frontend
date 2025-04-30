@@ -1,53 +1,41 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, ExternalLink, Loader2, RefreshCw } from "lucide-react"
 import { useLanguage } from "@/hooks/use-language"
-import { useLotteryData } from "@/hooks/use-lottery-data"
+import { fetchRecentResults } from "@/lib/services/lottery-service-v2"
+import { convertResultToUIFormat } from "@/lib/utils/lottery"
 
 export function PastDraws() {
   const [lotteryType, setLotteryType] = useState("all")
   const [page, setPage] = useState(1)
   const { t } = useLanguage()
-  const {
-    pastDraws,
-    lotteryTypes,
-    lotteryIssues,
-    isLoadingPastDraws,
-    isLoadingIssues,
-    errorPastDraws,
-    refreshPastDraws,
-  } = useLotteryData()
+  const [draws, setDraws] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // 结合彩票期号和历史抽奖数据
-  const combinedDraws = lotteryIssues
-    .filter((issue) => issue.status === "DRAWN")
-    .map((issue) => {
-      // 查找对应的彩票
-      const lottery = lotteryTypes.find((type) => {
-        const pastDraw = pastDraws.find((draw) => draw.id === issue.issue_id)
-        return pastDraw && pastDraw.type === type.type_name
-      })
-
-      return {
-        id: issue.issue_id,
-        date: new Date(issue.draw_time || issue.updated_at).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        }),
-        type: lottery ? lottery.type_name : "未知类型",
-        numbers: issue.winning_numbers,
-        jackpot: `${Math.floor(Math.random() * 100) + 5} ETH`, // 模拟奖金
-        winners: Math.floor(Math.random() * 5), // 模拟获奖人数
-        txHash: issue.draw_tx_hash || `0x${Math.random().toString(16).substring(2, 10)}...`,
+  useEffect(() => {
+    async function loadDraws() {
+      try {
+        setIsLoading(true)
+        const rawResults = await fetchRecentResults()
+        const formattedResults = rawResults.map(convertResultToUIFormat)
+        setDraws(formattedResults)
+        setError(null)
+      } catch (err) {
+        console.error("Failed to fetch past draws:", err)
+        setError("Failed to load past draws. Please try again later.")
+      } finally {
+        setIsLoading(false)
       }
-    })
+    }
+    loadDraws()
+  }, [])
 
-  if (isLoadingPastDraws || isLoadingIssues) {
+  if (isLoading) {
     return (
       <div className="text-center py-8">
         <Loader2 className="h-8 w-8 animate-spin mx-auto" />
@@ -56,11 +44,11 @@ export function PastDraws() {
     )
   }
 
-  if (errorPastDraws) {
+  if (error) {
     return (
       <div className="text-center py-8">
-        <p className="text-red-500">{errorPastDraws}</p>
-        <Button variant="outline" className="mt-4" onClick={refreshPastDraws}>
+        <p className="text-red-500">{error}</p>
+        <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
           <RefreshCw className="mr-2 h-4 w-4" />
           {t("common.retry")}
         </Button>
@@ -68,14 +56,16 @@ export function PastDraws() {
     )
   }
 
-  // 根据选择的彩票类型过滤数据
-  const filteredDraws =
-    lotteryType === "all" ? combinedDraws : combinedDraws.filter((draw) => draw.type === lotteryType)
+  // 筛选
+  const filteredDraws = lotteryType === "all" ? draws : draws.filter(draw => draw.typeName === lotteryType)
 
-  // 计算分页
+  // 分页
   const itemsPerPage = 5
   const totalPages = Math.ceil(filteredDraws.length / itemsPerPage)
   const paginatedDraws = filteredDraws.slice((page - 1) * itemsPerPage, page * itemsPerPage)
+
+  // 提取所有类型
+  const lotteryTypes = Array.from(new Set(draws.map(draw => draw.typeName)))
 
   return (
     <div className="space-y-6">
@@ -88,8 +78,8 @@ export function PastDraws() {
           <SelectContent>
             <SelectItem value="all">{t("results.allLotteries")}</SelectItem>
             {lotteryTypes.map((type) => (
-              <SelectItem key={type.type_id} value={type.type_name}>
-                {type.type_name}
+              <SelectItem key={type} value={type}>
+                {type}
               </SelectItem>
             ))}
           </SelectContent>
@@ -100,23 +90,25 @@ export function PastDraws() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t("results.date")}</TableHead>
-              <TableHead>{t("results.lotteryType")}</TableHead>
+              <TableHead>{t("results.lotteryName")}</TableHead>
+              <TableHead>{t("results.issueNumber")}</TableHead>
               <TableHead className="hidden md:table-cell">{t("results.winningNumbers")}</TableHead>
-              <TableHead>{t("results.jackpot")}</TableHead>
-              <TableHead>{t("results.winners")}</TableHead>
+              <TableHead>{t("results.drawTime")}</TableHead>
+              <TableHead>{t("results.prizePool")}</TableHead>
+              <TableHead>{t("results.status")}</TableHead>
               <TableHead className="text-right">{t("results.verify")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {paginatedDraws.length > 0 ? (
               paginatedDraws.map((draw) => (
-                <TableRow key={draw.id}>
-                  <TableCell>{draw.date}</TableCell>
-                  <TableCell>{draw.type}</TableCell>
-                  <TableCell className="hidden md:table-cell">{draw.numbers}</TableCell>
-                  <TableCell>{draw.jackpot}</TableCell>
-                  <TableCell>{draw.winners}</TableCell>
+                <TableRow key={draw.issueId}>
+                  <TableCell>{draw.lotteryName}</TableCell>
+                  <TableCell>{draw.issueNumber}</TableCell>
+                  <TableCell className="hidden md:table-cell">{draw.winningNumbers}</TableCell>
+                  <TableCell>{draw.drawTime}</TableCell>
+                  <TableCell>{draw.prizePool} ETH</TableCell>
+                  <TableCell>{draw.status}</TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                       <ExternalLink className="h-4 w-4" />
@@ -127,7 +119,7 @@ export function PastDraws() {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                   {t("common.noResults")}
                 </TableCell>
               </TableRow>

@@ -38,6 +38,14 @@ export interface Customer {
   }
 }
 
+export interface Role{
+  role_id: number
+  role_name: string
+  role_type: string
+  description: string
+  create_at:string
+}
+
 // 用户注册请求数据类型
 export interface CustomerRequest {
   customer_address: string
@@ -80,6 +88,18 @@ export const getCustomerById = async (customerAddress: string): Promise<Customer
     return response.data.data
   } catch (error) {
     console.error("获取用户信息失败:", error)
+    throw error
+  }
+}
+
+export const getRolesList = async(): Promise<Role[]> =>{
+  try{
+    const response = await api.get(`/customers/roles`)
+    console.log("获取角色列表信息成功：",response.data)
+    return response.data.data
+
+  }catch(error){
+    console.error("获取角色列表信息失败:",error)
     throw error
   }
 }

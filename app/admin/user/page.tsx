@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import LotteryManagement from "@/components/admin/lottery-management"
+import UserManagement from "@/components/admin/user-management"
 import { ConnectWallet } from "@/components/connect-wallet"
 import { useUserState } from "@/hooks/use-user-state"
 import { useLanguage } from "@/hooks/use-language"
@@ -10,7 +10,7 @@ import { Loader2 } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
 
-export default function AdminManagePage() {
+export default function AdminUserManagePage() {
   const { isConnected, isAdmin, isLoading } = useUserState()
   const { t } = useLanguage()
   const router = useRouter()
@@ -44,8 +44,7 @@ export default function AdminManagePage() {
               <AlertTitle>{t("common.warning")}</AlertTitle>
               <AlertDescription>{t("admin.manage.adminOnlyFeature")}</AlertDescription>
             </Alert>
-
-            <LotteryManagement />
+            <UserManagement />
           </div>
         ) : null
       ) : (

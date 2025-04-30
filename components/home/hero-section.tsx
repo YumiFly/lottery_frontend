@@ -1,18 +1,28 @@
 "use client"
 
+import { useState,useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, Loader2 } from "lucide-react"
 import { useLanguage } from "@/hooks/use-language"
+import {fetchPrizePool} from "@/lib/services/lottery-service-v2"
 
-interface HeroSectionProps {
-  prizePool: number
-  isLoading: boolean
-}
-
-export function HeroSection({ prizePool, isLoading }: HeroSectionProps) {
+export function HeroSection() {
   const { t } = useLanguage()
+  const [isLoading, setIsLoading] = useState(true)
+  const [prizePool, setPrizePool] = useState<number>(0)
+
+useEffect(() => {
+    // Fetch the prize pool data from the API
+    async function getPrizePool() {
+      setIsLoading(true)
+      const poolCount = await fetchPrizePool()
+      setPrizePool(poolCount)
+    }
+    getPrizePool()
+    setIsLoading(false)
+  })
 
   return (
     <div className="relative py-16 md:py-24 overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-50 to-teal-100">

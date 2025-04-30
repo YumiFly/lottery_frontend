@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 import { Clock, Ticket, RefreshCw } from "lucide-react"
-import { FeaturedLottery, fetchLotteries, purchaseTickets } from "@/lib/services/lottery-service"
+import { fetchLotteries,purchaseTickets,LotteryUI } from "@/lib/services/lottery-service-v2"
 import dayjs from 'dayjs'
 import { useWallet } from "@/hooks/use-wallet"
 
@@ -24,8 +24,8 @@ export function LotteryPurchase() {
   const searchParams = useSearchParams()
   const initialLotteryIdFromURL = searchParams.get("id")
   const [activeTab, setActiveTab] = useState<string>(initialLotteryIdFromURL || "")
-  const [allLotteries, setAllLotteries] = useState<FeaturedLottery[]>([])
-  const [filteredLottery, setFilteredLottery] = useState<FeaturedLottery | undefined>(undefined)
+  const [allLotteries, setAllLotteries] = useState<LotteryUI[]>([])
+  const [filteredLottery, setFilteredLottery] = useState<LotteryUI>()
   const [isLoading, setIsLoading] = useState(true)
   const [isPurchasing, setIsPurchasing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -39,10 +39,11 @@ export function LotteryPurchase() {
       try {
         setIsLoading(true)
         const data = await fetchLotteries()
+        console.log("Lotteries:", data)
         setAllLotteries(data)
         setError(null)
         if (!initialLotteryIdFromURL && data.length > 0) {
-          setActiveTab(data[0].lottery_id)
+          setActiveTab(data[0].id)
         }
       } catch (err) {
         console.error("Failed to fetch lotteries:", err)
@@ -55,9 +56,11 @@ export function LotteryPurchase() {
   }, [initialLotteryIdFromURL])
 
   useEffect(() => {
-    const lottery = allLotteries.find(lottery => lottery.lottery_id === activeTab);
-    setFilteredLottery(lottery);
-  }, [allLotteries, activeTab]);
+    if (!isLoading && allLotteries.length > 0 && activeTab) {
+      const lottery = allLotteries.find((lottery: LotteryUI) => lottery.id === activeTab);
+      setFilteredLottery(lottery);
+    }
+  }, [allLotteries, activeTab, isLoading]);
 
   if (isLoading) {
     return <div>Loading lotteries...</div>
@@ -81,12 +84,12 @@ export function LotteryPurchase() {
     return <div>No lottery details available for the selected tab.</div>
   }
 
-  const { maxNumbers, numberRange } = extractBettingRules(activeLottery.betting_rules)
-  const endTime = activeLottery.lotteryIssue[0]?.sale_end_time ? dayjs(activeLottery.lotteryIssue[0]?.sale_end_time).format('YYYY-MM-DD HH:mm:ss') : 'N/A'
-  const prize = activeLottery.prize_structure
-  const ticketPrice = activeLottery.ticket_price
-  const lotteryName = activeLottery.ticket_name
-  const currentIssueId = activeLottery.lotteryIssue[0]?.issue_id
+  const { maxNumbers, numberRange } = extractBettingRules(activeLottery.bettingRules)
+  const endTime = activeLottery.issue?.saleEndTime ? dayjs(activeLottery.issue?.saleEndTime).format('YYYY-MM-DD HH:mm:ss') : 'N/A'
+  const prize = activeLottery.prizeStructure
+  const ticketPrice = activeLottery.price
+  const lotteryName = activeLottery.name
+  const currentIssueId = activeLottery.issue?.id
 
   const handleNumberClick = (number: number) => {
     if (selectedNumbers.includes(number)) {
@@ -144,7 +147,7 @@ export function LotteryPurchase() {
     setIsPurchasing(true)
     try {
       const betContent = selectedNumbers.sort((a, b) => a - b).join(',')
-      const purchaseAmount = parseFloat(ticketPrice) * ticketCount
+      const purchaseAmount = ticketPrice * ticketCount
 
       const success = await purchaseTickets(
         currentIssueId,
@@ -183,9 +186,9 @@ export function LotteryPurchase() {
     <div className="space-y-8">
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
-          {allLotteries.map((lottery) => (
-            <TabsTrigger key={lottery.lottery_id} value={lottery.lottery_id}>
-              {lottery.ticket_name}
+          {allLotteries.map((lottery:any) => (
+            <TabsTrigger key={lottery.id} value={lottery.id}>
+              {lottery.name}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -229,22 +232,22 @@ export function LotteryPurchase() {
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500">Lottery:</span>
-                  <span className="font-medium">{activeLottery?.ticket_name}</span>
+                  <span className="font-medium">{activeLottery?.name}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500">Prize Pool:</span>
-                  <span className="font-medium">{activeLottery?.prize_structure}</span>
+                  <span className="font-medium">{activeLottery?.prizeStructure}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500">Ticket Price:</span>
-                  <span className="font-medium">{activeLottery?.ticket_price} LOT</span>
+                  <span className="font-medium">{activeLottery?.price} LOT</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-500">Ends in:</span>
                   <span className="font-medium text-orange-600 flex items-center">
                     <Clock className="mr-1 h-4 w-4" />
-                    {activeLottery?.lotteryIssue[0]?.sale_end_time ? (
-                      dayjs(activeLottery.lotteryIssue[0]?.sale_end_time).format('YYYY-MM-DD HH:mm:ss')
+                    {activeLottery?.issue?.saleEndTime ? (
+                      dayjs(activeLottery.issue?.saleEndTime).format('YYYY-MM-DD HH:mm:ss')
                     ) : (
                       'N/A'
                     )}
@@ -271,14 +274,14 @@ export function LotteryPurchase() {
                 </div>
                 <div className="flex justify-between items-center font-bold text-lg pt-4 border-t">
                   <span>Total:</span>
-                  <span>{Number.parseFloat(activeLottery?.ticket_price || '0') * ticketCount} LOT</span>
+                  <span>{(activeLottery?.price || 0) * ticketCount} LOT</span>
                 </div>
               </CardContent>
               <CardFooter>
                 <Button
                   className="w-full bg-emerald-600 hover:bg-emerald-700"
                   onClick={handlePurchase}
-                  disabled={selectedNumbers.length !== maxNumbers || isPurchasing || !address || !activeLottery?.lotteryIssue[0]?.issue_id}
+                  disabled={selectedNumbers.length !== maxNumbers || isPurchasing || !address || !activeLottery?.issue?.id}
                 >
                   <Ticket className="mr-2 h-4 w-4" /> Purchase Tickets
                 </Button>

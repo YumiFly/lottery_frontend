@@ -15,6 +15,7 @@ export default function KycPage() {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    console.log("isConnected", isConnected, "address", address, "customer", customer, "isVerified", isVerified, "isLoading", isLoading)
     setMounted(true)
   }, [])
 

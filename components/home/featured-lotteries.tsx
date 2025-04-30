@@ -8,11 +8,31 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Badge } from "@/components/ui/badge"
 import { Clock, Ticket, Loader2,RefreshCw } from "lucide-react"
 import { useLanguage } from "@/hooks/use-language"
-import { useLotteryData } from "@/hooks/use-lottery-data"
+import {fetchLotteries} from "@/lib/services/lottery-service-v2"
+
 export function FeaturedLotteries() {
   const { t } = useLanguage()
-  const { lotteries, isLoadingLotteries, errorLotteries, refreshLotteries } = useLotteryData()
+  const [lotteries, setLotteries] = useState<any[]>([])
+  const [isLoadingLotteries, setIsLoadingLotteries] = useState(true)
+  const [errorLotteries, setErrorLotteries] = useState<string | null>(null)
 
+  async function fetchLotteriesData() {
+    try {
+      setIsLoadingLotteries(true)
+      const response = await fetchLotteries()
+      setLotteries(response)
+      setErrorLotteries(null) // 成功后清除错误
+    } catch (error) {
+      setErrorLotteries("Failed to load lotteries")
+    } finally {
+      setIsLoadingLotteries(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchLotteriesData()
+  }, [])
+  
   if (isLoadingLotteries) {
     return (
       <section className="py-8 text-center">
@@ -26,14 +46,13 @@ export function FeaturedLotteries() {
     return (
       <section className="py-8 text-center">
         <p className="text-red-500">{errorLotteries}</p>
-        <Button variant="outline" className="mt-4" onClick={refreshLotteries}>
+        <Button variant="outline" className="mt-4" onClick={() => fetchLotteriesData()}>
           <RefreshCw className="mr-2 h-4 w-4" />
           {t("common.retry")}
         </Button>
       </section>
     )
   }
-
   // Lottery images mapping
   const lotteryImages = ["/images/lottery-ticket.png", "/images/lottery-draw.png", "/images/lottery-winner.png"]
 
@@ -47,41 +66,41 @@ export function FeaturedLotteries() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {lotteries.map((lottery, index) => (
-          <Card key={lottery.lottery_id} className="overflow-hidden hover:shadow-md transition-shadow">
+          <Card key={lottery.id} className="overflow-hidden hover:shadow-md transition-shadow">
             <div className="aspect-video relative">
               <Image
                 src={lotteryImages[index % lotteryImages.length] || "/placeholder.svg"}
-                alt={lottery.ticket_name}
+                alt={lottery.name}
                 width={400}
                 height={225}
                 className="w-full h-full object-cover"
               />
-              <Badge className="absolute top-3 right-3 bg-emerald-600">Prize: {lottery.ticket_price}</Badge>
+              <Badge className="absolute top-3 right-3 bg-emerald-600">Prize: {lottery.price}</Badge>
             </div>
             <CardHeader>
-              <CardTitle>{lottery.ticket_name}</CardTitle>
+              <CardTitle>{lottery.name}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">{t("home.featured.ticketPrice")}:</span>
-                  <span className="font-medium">{lottery.ticket_price}</span>
+                  <span className="font-medium">{lottery.price}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">{t("home.featured.participants")}:</span>
-                  <span className="font-medium">{lottery.prize_structure}</span>
+                  <span className="font-medium">{lottery.prizeStructure}</span>
                 </div>
                 <div className="flex justify-between text-sm items-center">
                   <span className="text-gray-500 flex items-center">
                     <Clock className="h-3 w-3 mr-1" /> {t("home.featured.endsIn")}:
                   </span>
-                  <span className="font-medium text-orange-600">{lottery.lotteryIssue[0].sale_end_time}</span>
+                  <span className="font-medium text-orange-600">{lottery.issue.saleEndTime}</span>
                 </div>
               </div>
             </CardContent>
             <CardFooter>
               <Button asChild className="w-full bg-emerald-600 hover:bg-emerald-700">
-                <Link href={`/buy?id=${lottery.lottery_id}`}>
+                <Link href={`/buy?id=${lottery.id}`}>
                   <Ticket className="mr-2 h-4 w-4" /> {t("home.featured.buyTickets")}
                 </Link>
               </Button>
