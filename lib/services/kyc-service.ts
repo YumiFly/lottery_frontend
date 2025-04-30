@@ -3,9 +3,11 @@ import {
   getCustomers as apiGetCustomers,
   getCustomerById as apiGetCustomerById,
   uploadPhoto as apiUploadPhoto,
+  getRolesList as apiGetRolesList,
   type Customer,
   type KycData,
   type CustomerRequest,
+  type Role,
 } from "@/lib/api/kyc"
 
 import { mockRegisterCustomer, mockGetCustomerById, mockUploadPhoto, getMockCustomers } from "@/lib/mock/kyc"
@@ -38,6 +40,16 @@ export async function getCustomers(): Promise<Customer[]> {
     }
     return apiGetCustomers()
   } catch (error) {
+    console.error("获取用户列表失败:", error)
+    throw error
+  }
+}
+
+export async function getRolesList () :Promise<Role[]> {
+  try{
+    const roles = await apiGetRolesList()
+    return roles
+  }catch(error){
     console.error("获取用户列表失败:", error)
     throw error
   }
@@ -122,4 +134,4 @@ export function prepareNewCustomerData(address: string, kycData: KycData, roleId
 }
 
 // 导出类型
-export type { Customer, KycData, CustomerRequest }
+export type { Customer, KycData, CustomerRequest,Role}

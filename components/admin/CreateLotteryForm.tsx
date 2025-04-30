@@ -57,6 +57,8 @@ export function CreateLotteryForm() {
   const handleCreateLottery = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    console.log("Creating lottery with form data:", lotteryForm);
+
     // 验证必填字段
     if (!selectedTypeId) {
       toast({

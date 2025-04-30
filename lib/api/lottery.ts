@@ -1,4 +1,3 @@
-import { RecentWinners } from '@/components/home/recent-winners';
 import api from "./config"
 
 // 彩票类型数据类型

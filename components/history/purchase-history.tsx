@@ -1,210 +1,241 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ExternalLink, Search, Loader2, RefreshCw } from "lucide-react"
-import { useWallet } from "@/hooks/use-wallet"
+import React, { useEffect, useState } from "react"
+import { Card, Table, Row, Col, Button, Empty, notification,Pagination } from "antd"
 import { useLanguage } from "@/hooks/use-language"
-import { fetchTicketPurchases } from "@/lib/services/lottery-service"
+import { getLotteryTickets, getLotteryWinners} from "@/lib/api/lotteryV2"
+import ReactECharts from "echarts-for-react"
+import { PieChartOutlined } from "@ant-design/icons"
+import { useWallet } from "@/hooks/use-wallet"
 
-interface TicketStats {
-  total: number
-  active: number
-  won: number
-  lost: number
-}
-
-interface TicketPurchase {
-  id: string
-  date: string
-  lottery: string
-  numbers: string
-  price: string
-  status: "Active" | "Won" | "Lost"
-  drawDate: string
-  prize?: string
-}
-
-export function PurchaseHistory() {
-  const [activeTab, setActiveTab] = useState("all")
-  const [purchaseHistory, setPurchaseHistory] = useState<TicketPurchase[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [stats, setStats] = useState<TicketStats>({ total: 0, active: 0, won: 0, lost: 0 })
-  const { address } = useWallet()
+export default function PurchaseHistory() {
   const { t } = useLanguage()
+  const { address } = useWallet()
+  const [ticketHistory, setTicketHistory] = useState<any[]>([])  // 当前用户的彩票购买记录
+  const [statData, setStatData] = useState<any>({})  // 中奖和未中奖的数据统计
+  const [isLoading, setIsLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
+  const [total, setTotal] = useState(0)
 
-  const loadPurchaseHistory = async () => {
-    if (!address) return
+  
 
-    setIsLoading(true)
-    setError(null)
+  // 加载当前用户的彩票购买记录和中奖数据
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        // 获取当前用户的所有购买记录
+        const { Tickets } = await getLotteryTickets({ buyer_address: address ||"" })  // 这里需要替换成当前用户的地址
+        setTicketHistory(Tickets)
 
-    try {
-      const data = await fetchTicketPurchases(address)
-      setPurchaseHistory(data)
 
-      // Calculate stats
-      const newStats = {
-        total: data.length,
-        active: data.filter((ticket) => ticket.status === "Active").length,
-        won: data.filter((ticket) => ticket.status === "Won").length,
-        lost: data.filter((ticket) => ticket.status === "Lost").length,
+        // 对每种彩票进行中奖和未中奖的统计
+        const lotteryStats: any = {}
+
+        for (const ticket of Tickets) {
+          // 获取彩票对应的中奖数据
+          const { Winners } = await getLotteryWinners({ issue_id: ticket.issue_id })
+           
+          for (const winner of Winners) {
+            if (!lotteryStats[winner.LotteryIssue.lottery_id]) {
+              lotteryStats[winner.LotteryIssue.lottery_id] = { won: 0, lost: 0 }
+            }
+            const isWinner= (winner.address === ticket.buyer_address)
+            if (isWinner) {
+              lotteryStats[winner.LotteryIssue.lottery_id].won += 1
+            } else {
+              lotteryStats[winner.LotteryIssue.lottery_id].lost += 1
+            }
+          }
+        }
+
+        setStatData(lotteryStats)
+      } catch (error) {
+        console.error("Failed to fetch purchase history:", error)
+        notification.error({
+          message: t("common.error"),
+          description: t("results.fetchFailed"),
+          placement: "bottomRight",
+          duration: 3
+        })
+      } finally {
+        setIsLoading(false)
       }
-      setStats(newStats)
-    } catch (err) {
-      console.error("Failed to fetch purchase history:", err)
-      setError("Failed to load purchase history. Please try again.")
-    } finally {
-      setIsLoading(false)
     }
+
+    fetchData()
+  }, [])
+
+  // 图表配置
+  const chartOption = {
+    title: {
+      text: t("results.purchaseAnalysis"),
+      left: "center",
+      top: "20px",
+    },
+    tooltip: {
+      trigger: "item",
+    },
+    legend: {
+      orient: "vertical",
+      left: "left",
+    },
+    series: [
+      {
+        name: t("results.purchaseResult"),
+        type: "pie",
+        radius: "50%",
+        data: Object.keys(statData).map((lotteryId) => {
+          const { won, lost } = statData[lotteryId]
+          return {
+            value: won + lost,
+            name: `Lottery ${lotteryId} - ${t("results.won")}: ${won}, ${t("results.lost")}: ${lost}`,
+          }
+        }),
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: "rgba(0, 0, 0, 0.5)",
+          },
+        },
+      },
+    ],
   }
 
-  useEffect(() => {
-    loadPurchaseHistory()
-  }, [address])
+  const handlePageChange = (page: number, pageSize: number) => {
+    setPage(page)
+    setPageSize(pageSize)
+    //fetchPastResults(page, pageSize, filters)
+  }
+  // 表格列定义
+  const columns = [
+    {
+      title: t("results.ticketName"),
+      dataIndex: "lottery_name",
+      key: "lottery_name",
+      width: 150,
+      ellipsis: true,
+      render: (_: any, record: any) => (
+        <span title={record.LotteryIssue.Lottery.ticket_name}>
+          {record.LotteryIssue.Lottery.ticket_name}
+        </span>
+      ),
+    },
+    {
+      title: t("results.issueNumber"),
+      dataIndex: "issue_number",
+      key: "issue_number",
+      width: 120,
+      ellipsis: true,
+      render: (_: any, record: any) => (
+        <span title={record.LotteryIssue.issue_number}>
+          {record.LotteryIssue.issue_number}
+        </span>
+      ),
+    },
+    {
+      title: t("results.ticketStatus"),
+      dataIndex: "ticket_status",
+      key: "ticket_status",
+      width: 120,
+      ellipsis: true,
+      render: (_: any, record: any) => {
+        const status = statData[record.LotteryIssue.lottery_id]
+          ? statData[record.LotteryIssue.lottery_id].won > 0
+            ? t("results.won")
+            : t("results.lost")
+          : t("results.noResults")
+          return <span title={status}>{status}</span>
+      },
+    },
+    {
+      title: t("results.purchaseTime"),
+      dataIndex: "purchase_time",
+      key: "purchase_time",
+      width: 180,
+      ellipsis: true,
+      render: (text: any) => <span title={text}>{text}</span>,
+    },
+    {
+      title: t("results.purchaseTxHash"),
+      dataIndex: "transaction_hash",
+      key: "transaction_hash",
+      width: 180,
+      ellipsis: true,
+      render: (text: any) => <span title={text}>{text}</span>,
+    },
+    {
+      title: t("results.betContent"),
+      dataIndex: "bet_content",
+      key: "bet_content",
+      width: 160,
+      ellipsis: true,
+      render: (text: any) => <span title={text}>{text}</span>,
+    },
+    {
+      title: t("results.purchaseAmount"),
+      dataIndex: "purchase_amount",
+      key: "purchase_amount",
+      width: 120,
+      ellipsis: true,
+      render: (text: any) => <span title={text}>{text}</span>,
+    },
 
-  const filteredHistory =
-    activeTab === "all"
-      ? purchaseHistory
-      : purchaseHistory.filter((ticket) => ticket.status.toLowerCase() === activeTab)
+  ]
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <Loader2 className="h-12 w-12 animate-spin text-emerald-600 mb-4" />
-        <p className="text-gray-500">{t("common.loading")}</p>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <p className="text-red-500 mb-4">{error}</p>
-        <Button onClick={loadPurchaseHistory} variant="outline" className="flex items-center">
-          <RefreshCw className="mr-2 h-4 w-4" />
-          {t("common.retry")}
-        </Button>
-      </div>
-    )
-  }
-
-  if (purchaseHistory.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <h3 className="text-xl font-semibold mb-2">{t("common.noData")}</h3>
-        <p className="text-gray-500 mb-6">You haven't purchased any lottery tickets yet.</p>
-        <Button asChild className="bg-emerald-600 hover:bg-emerald-700">
-          <a href="/buy">{t("common.buyTickets")}</a>
-        </Button>
+      <div className="flex items-center justify-center h-[60vh]">
+        <Empty description={t("common.loading")} />
       </div>
     )
   }
 
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>{t("history.totalTickets")}</CardDescription>
-            <CardTitle className="text-2xl">{stats.total}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>{t("history.activeTickets")}</CardDescription>
-            <CardTitle className="text-2xl">{stats.active}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>{t("history.winningTickets")}</CardDescription>
-            <CardTitle className="text-2xl">{stats.won}</CardTitle>
-          </CardHeader>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>{t("history.lostTickets")}</CardDescription>
-            <CardTitle className="text-2xl">{stats.lost}</CardTitle>
-          </CardHeader>
-        </Card>
-      </div>
+    <div className="space-y-6">
+      {/* 购买历史的图形展示 */}
+      <Card
+        title={t("results.purchaseAnalysis")}
+        bordered={false}
+        style={{
+          borderRadius: "10px",
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+          backgroundColor: "#f9f9f9",
+          marginBottom: "20px",
+        }}
+      >
+        <ReactECharts option={chartOption} style={{ height: "400px" }} />
+      </Card>
 
-      <Tabs defaultValue="all" onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="all">{t("history.allTickets")}</TabsTrigger>
-          <TabsTrigger value="active">{t("history.active")}</TabsTrigger>
-          <TabsTrigger value="won">{t("history.won")}</TabsTrigger>
-          <TabsTrigger value="lost">{t("history.lost")}</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value={activeTab} className="mt-6">
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t("history.date")}</TableHead>
-                  <TableHead>{t("history.lottery")}</TableHead>
-                  <TableHead className="hidden md:table-cell">{t("history.numbers")}</TableHead>
-                  <TableHead>{t("history.price")}</TableHead>
-                  <TableHead>{t("history.status")}</TableHead>
-                  <TableHead className="text-right">{t("history.actions")}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredHistory.length > 0 ? (
-                  filteredHistory.map((ticket) => (
-                    <TableRow key={ticket.id}>
-                      <TableCell>{ticket.date}</TableCell>
-                      <TableCell>{ticket.lottery}</TableCell>
-                      <TableCell className="hidden md:table-cell">{ticket.numbers}</TableCell>
-                      <TableCell>{ticket.price}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            ticket.status === "Active" ? "outline" : ticket.status === "Won" ? "default" : "secondary"
-                          }
-                          className={
-                            ticket.status === "Won"
-                              ? "bg-green-100 text-green-800 hover:bg-green-100"
-                              : ticket.status === "Lost"
-                                ? "bg-gray-100 text-gray-800 hover:bg-gray-100"
-                                : ""
-                          }
-                        >
-                          {ticket.status}
-                          {ticket.status === "Won" && ticket.prize && ` (${ticket.prize})`}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <Search className="h-4 w-4" />
-                          <span className="sr-only">View details</span>
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                          <ExternalLink className="h-4 w-4" />
-                          <span className="sr-only">View on blockchain</span>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                      {t("common.noResults")}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </TabsContent>
-      </Tabs>
+      {/* 用户购买记录表格 */}
+      <Card title={t("results.purchaseHistory")} bordered={false}>
+      <Table
+          columns={columns}
+          dataSource={ticketHistory}
+          rowKey="ticket_id"
+          pagination={{
+            current: page,
+            pageSize: pageSize,
+            total: ticketHistory.length,
+            showSizeChanger: true,
+            showTotal: (total) => `${total} ${t("common.items")}`,
+            onChange: handlePageChange,
+          }}
+          locale={{
+            emptyText: <Empty description={t("common.noResults")} />,
+          }}
+        />
+        {/* 分页组件 */}
+        {/* <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "20px" }}>
+          <Pagination
+            current={page}
+            total={ticketHistory.length}
+            pageSize={pageSize}
+            onChange={handlePageChange}
+            showSizeChanger
+            showTotal={(total) => `${total} ${t("common.items")}`}
+          />
+        </div> */}
+      </Card>
     </div>
   )
 }

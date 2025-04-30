@@ -1,77 +1,87 @@
-"use client"
-
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Wallet, Loader2 } from "lucide-react"
+import React, { useState } from "react"
+import { Modal, List, Avatar, Tag, Button, message } from "antd"
+import { Wallet } from "lucide-react"
 import { useLanguage } from "@/hooks/use-language"
 import { useWallet } from "@/hooks/use-wallet"
-import { useUserState } from "@/hooks/use-user-state"
 
 export function ConnectWallet() {
-  const [open, setOpen] = useState(false)
   const { t } = useLanguage()
-  const { connect, isLoading } = useWallet()
-  const { isVerified } = useUserState()
+  const { connect } = useWallet()
+  const [open, setOpen] = useState(false)
 
-  const handleConnect = async (walletType: string) => {
+  const isMetaMaskInstalled = typeof window !== "undefined" && window.ethereum?.isMetaMask
+
+  const wallets = [
+    {
+      name: "MetaMask",
+      key: "MetaMask",
+      icon: "/images/metamask.png",
+      installed: isMetaMaskInstalled,
+    },
+    {
+      name: "Coinbase",
+      key: "Coinbase",
+      icon: "/images/coinbase.png",
+    },
+    {
+      name: "All Wallets",
+      key: "All",
+      icon: "/images/all_wallets.png",
+      disabled: true,
+    },
+  ]
+
+  const handleWalletClick = async (walletType: string) => {
     try {
       await connect(walletType)
       setOpen(false)
-    } catch (error) {
-      console.error(`Error connecting to ${walletType}:`, error)
+    } catch (err) {
+      message.error(t("common.connectFailed"))
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-emerald-600 hover:bg-emerald-700">
-          <Wallet className="mr-2 h-4 w-4" /> {t("common.connectWallet")}
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("common.connectWallet")}</DialogTitle>
-          <DialogDescription>Connect your wallet to access all features of the platform.</DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          {["MetaMask", "WalletConnect", "Coinbase Wallet"].map((wallet) => (
-            <Button
-              key={wallet}
-              onClick={() => handleConnect(wallet)}
-              variant="outline"
-              className="justify-start h-14"
-              disabled={isLoading}
+    <>
+      <Button type="primary" icon={<Wallet />} onClick={() => setOpen(true)}>
+        {t("common.connectWallet")}
+      </Button>
+
+      <Modal
+        open={open}
+        title={t("common.connectWallet")}
+        onCancel={() => setOpen(false)}
+        footer={null}
+      >
+        <List
+          itemLayout="horizontal"
+          dataSource={wallets}
+          renderItem={(wallet) => (
+            <List.Item
+              style={{
+                padding: "12px",
+                borderRadius: "12px",
+                marginBottom: "8px",
+                background: wallet.disabled ? "#f5f5f5" : "#fff",
+                cursor: wallet.disabled ? "not-allowed" : "pointer",
+                opacity: wallet.disabled ? 0.5 : 1,
+              }}
+              onClick={() => {
+                if (!wallet.disabled) handleWalletClick(wallet.key)
+              }}
             >
-              <div className="flex items-center justify-between w-full">
-                <div className="flex items-center">
-                  <div className="w-6 h-6 bg-gray-200 rounded-full"></div>
-                  <span className="ml-2">{wallet}</span>
-                </div>
-                {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-              </div>
-            </Button>
-          ))}
-        </div>
-        <div className="text-xs text-gray-500 mt-2">
-          {isVerified ? (
-            <div className="flex items-center text-green-600">
-              <div className="w-2 h-2 bg-green-600 rounded-full mr-2"></div>
-              Your account is KYC verified
-            </div>
-          ) : (
-            <div>New users will need to complete KYC verification to access all features.</div>
+              <List.Item.Meta
+                avatar={<Avatar src={wallet.icon} shape="square" size={40} />}
+                title={<span style={{ fontWeight: 500 }}>{wallet.name}</span>}
+              />
+              {wallet.installed && (
+                <Tag color="green" style={{ fontWeight: 500 }}>
+                  INSTALLED
+                </Tag>
+              )}
+            </List.Item>
           )}
-        </div>
-      </DialogContent>
-    </Dialog>
+        />
+      </Modal>
+    </>
   )
 }

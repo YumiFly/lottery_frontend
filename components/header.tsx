@@ -19,9 +19,13 @@ export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
 
+  const [menus, setMenus] = useState<{ menu_name: string; menu_path: string }[]>([])
+
   useEffect(() => {
     setMounted(true)
   }, [])
+
+
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen)
   const closeMenu = () => setIsMenuOpen(false)
@@ -32,7 +36,8 @@ export function Header() {
     { name: t("common.results"), href: "/results", public: true },
     { name: t("common.buyTickets"), href: "/buy", public: false },
     { name: t("common.history"), href: "/history", public: false },
-    { name: t("common.admin"), href: "/admin/manage", admin: true },
+    { name: t("common.lotteryManagement"), href: "/admin/manage", admin: true },
+    { name: t("common.admin"), href: "/admin/user", admin: true },
     { name: "KYC", href: "/kyc", public: false },
   ]
 

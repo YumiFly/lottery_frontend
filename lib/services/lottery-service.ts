@@ -128,21 +128,8 @@ export async function fetchLottery(id: string): Promise<any | undefined> {
 }
 
 // 获取彩票结果
-export async function fetchLotteryResults(): Promise<Record<string, any>> {
+export async function fetchLotteryResults(): Promise<Record<string,any>> {
   try {
-    if (USE_MOCK) {
-      const results = getMockLatestLotteryResults()
-      const formattedResults: Record<string, any> = {}
-
-      // 将结果转换为UI格式并按类型分组
-      results.forEach((result) => {
-        const type = result.type_id === "1" ? "weekly" : result.type_id === "2" ? "daily" : "monthly"
-        formattedResults[type] = convertResultToUIFormat(result)
-      })
-
-      return formattedResults
-    }
-
     // 实际API调用
     const results = await apiGetLatestLotteryResult()
     const formattedResults: Record<string, any> = {}
@@ -161,52 +148,11 @@ export async function fetchLotteryResults(): Promise<Record<string, any>> {
 }
 
 // 获取历史抽奖记录
-export async function fetchPastDraws(type = "all"): Promise<any[]> {
+export async function fetchPastDraws(): Promise<any[]> {
   try {
-    if (USE_MOCK) {
-      const results = getMockLatestLotteryResults()
-
-      // 转换为UI显示格式
-      const pastDraws = results.map((result) => ({
-        id: result.issue_id,
-        date: new Date(result.draw_date).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        }),
-        type: result.ticket_name,
-        numbers: result.winning_numbers,
-        jackpot: `${Math.floor(Math.random() * 100) + 5} LOT`, // 模拟奖金
-        winners: Math.floor(Math.random() * 5), // 模拟获奖人数
-        txHash: `0x${Math.random().toString(16).substring(2, 10)}...`,
-      }))
-
-      if (type === "all") {
-        return pastDraws
-      } else {
-        return pastDraws.filter((draw) => draw.type === type)
-      }
-    }
-
     // 实际API调用
     const results = await apiGetLatestLotteryResult()
-
-    // 转换为UI显示格式
-    const pastDraws = results.map((result) => ({
-      id: result.issue_id,
-      date: new Date(result.draw_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-      type: result.ticket_name,
-      numbers: result.winning_numbers,
-      jackpot: `${Math.floor(Math.random() * 100) + 5} LOT`, // 模拟奖金，实际应从API获取
-      winners: Math.floor(Math.random() * 5), // 模拟获奖人数，实际应从API获取
-      txHash: `0x${Math.random().toString(16).substring(2, 10)}...`, // 模拟交易哈希，实际应从API获取
-    }))
-
-    if (type === "all") {
-      return pastDraws
-    } else {
-      return pastDraws.filter((draw) => draw.type === type)
-    }
+    return results
   } catch (error) {
     console.error("获取历史抽奖记录失败:", error)
     throw error

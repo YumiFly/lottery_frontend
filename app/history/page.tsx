@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { PurchaseHistory } from "@/components/history/purchase-history"
+import  PurchaseHistory from "@/components/history/purchase-history"
 import { ConnectWallet } from "@/components/connect-wallet"
 import { useWallet } from "@/hooks/use-wallet"
 import { useLanguage } from "@/hooks/use-language"
@@ -33,10 +33,10 @@ export default function HistoryPage() {
     <div className="container mx-auto px-4 py-8">
       {isConnected ? (
         <div className="space-y-12">
-          <div className="text-center">
+          {/* <div className="text-center">
             <h1 className="text-3xl font-bold mb-2">{t("history.title")}</h1>
             <p className="text-muted-foreground">{t("history.description")}</p>
-          </div>
+          </div> */}
           <PurchaseHistory />
         </div>
       ) : (

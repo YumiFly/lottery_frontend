@@ -1,15 +1,36 @@
 "use client"
 
+import {useEffect, useState} from "react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Trophy, Loader2, RefreshCw } from "lucide-react"
 import { useLanguage } from "@/hooks/use-language"
-import { useLotteryData } from "@/hooks/use-lottery-data"
+import {fetchRecentWinners} from "@/lib/services/lottery-service-v2"
 
 export function RecentWinners() {
   const { t } = useLanguage()
-  const { recentWinners, isLoadingWinners, errorWinners, refreshWinners } = useLotteryData()
+  const [recentWinners, setRecentWinners] = useState<any[]>([])
+  const [isLoadingWinners, setIsLoadingWinners] = useState<boolean>(true)
+  const [errorWinners, setErrorWinners] = useState<string | null>(null)
+
+  async function refreshWinners() {
+    setIsLoadingWinners(true)
+    try {
+      const winners = await fetchRecentWinners()
+      console.log("Recent winners:", winners) // Add this line
+      setRecentWinners(winners)
+      setErrorWinners(null)
+    } catch (error) {
+      setErrorWinners("Error loading recent winners. Please try again later.")
+    } finally {
+      setIsLoadingWinners(false)
+    }
+  }
+
+  useEffect(() => {
+    refreshWinners()
+  }, [])
 
   if (isLoadingWinners) {
     return (
@@ -44,20 +65,20 @@ export function RecentWinners() {
           <Card key={index} className="overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
               <CardTitle className="flex items-center">
-                <Trophy className="mr-2 h-5 w-5" /> {winner.win_amount}
+                <Trophy className="mr-2 h-5 w-5" /> {winner.prizeAmount}
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6">
               <div className="flex items-center space-x-4">
                 <Avatar>
                   <AvatarFallback className="bg-emerald-100 text-emerald-800">
-                    {winner.winner_addr.substring(0, 2)}
+                    {winner.winnerAddress.substring(0, 2)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="space-y-1">
-                  <p className="text-sm font-medium">{winner.winner_addr}</p>
+                  <p className="text-sm font-medium">{winner.winnerAddress}</p>
                   <p className="text-xs text-gray-500">
-                    {t("home.recentWinners.wonIn")} {winner.ticket_name} {t("home.recentWinners.on")} {winner.win_date}
+                    {t("home.recentWinners.wonIn")} {winner.lotteryName} {t("home.recentWinners.on")} {winner.createdAt}
                   </p>
                 </div>
               </div>
