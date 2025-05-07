@@ -42,7 +42,7 @@ export default function AdminUserManagePage() {
             <Alert className="bg-yellow-50 border-yellow-200">
               <AlertCircle className="h-4 w-4 text-yellow-600" />
               <AlertTitle>{t("common.warning")}</AlertTitle>
-              <AlertDescription>{t("admin.manage.adminOnlyFeature")}</AlertDescription>
+              <AlertDescription>{t("admin.manage.userManageFeature")}</AlertDescription>
             </Alert>
             <UserManagement />
           </div>

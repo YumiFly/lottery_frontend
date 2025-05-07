@@ -336,6 +336,7 @@ export const en = {
       selectSaleEndDate: "Please select a sale end date",
       adminOnlyFeature:
         "Lottery management features are for administrators only. You can create lotteries, issue periods, and execute draws.",
+      userManageFeature:"User management features are for  administrators only . You can query all users and verify all pending users."
     },
   },
   kyc: {

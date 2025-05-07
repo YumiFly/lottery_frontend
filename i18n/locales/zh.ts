@@ -335,6 +335,7 @@ export const zh = {
       createIssueError: "发行失败",
       selectSaleEndDate: "选择售卖结束日期",
       adminOnlyFeature: "彩票管理功能仅限管理员使用。您可以创建彩票、发行期号和执行开奖操作。",
+       userManageFeature:"用户管理功能仅限管理员使用。您可以查询所有用户和验证需要KYC的用户。"
     },
   },
   kyc: {
